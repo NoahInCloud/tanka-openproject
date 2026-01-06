@@ -105,7 +105,7 @@ local k = import 'k.libsonnet';
     local pvc = k.core.v1.persistentVolumeClaim,
 
     statefulset: statefulSet.new(
-      name='poc-postgres',
+      name='lhw-openproject-database',
       replicas=1,
       containers=[
         container.new('postgres', 'docker.io/postgres:16')
@@ -127,10 +127,10 @@ local k = import 'k.libsonnet';
     + statefulSet.metadata.withLabels($.commonLabels)
     + statefulSet.spec.template.metadata.withAnnotations($.vaultAnnotations)
     + statefulSet.spec.template.metadata.withLabels($.commonLabels + { 'app.kubernetes.io/name': 'postgres' })
-    + statefulSet.spec.withServiceName('poc-postgres'),
+    + statefulSet.spec.withServiceName('lhw-openproject-database'),
 
     service: service.new(
-      name='poc-postgres',
+      name='lhw-openproject-database',
       selector={ 'app.kubernetes.io/name': 'postgres' },
       ports=[port.newNamed('postgresql', 5432, 'postgresql')],
     )
