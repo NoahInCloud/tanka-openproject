@@ -5,13 +5,13 @@ metadata:
     app.kubernetes.io/managed-by: tanka
     app.kubernetes.io/part-of: openproject-poc
     environment: test
-  name: lhw-openproject-memcached
+  name: poc-memcached
   namespace: lhw-openproject-test
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: lhw-openproject-memcached
+      name: poc-memcached
   template:
     metadata:
       annotations:

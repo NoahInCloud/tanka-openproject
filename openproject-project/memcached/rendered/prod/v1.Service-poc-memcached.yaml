@@ -5,12 +5,12 @@ metadata:
     app.kubernetes.io/managed-by: tanka
     app.kubernetes.io/part-of: openproject-poc
     environment: production
-  name: lhw-openproject-database
+  name: poc-memcached
   namespace: lhw-openproject-prod
 spec:
   ports:
-  - name: postgresql
-    port: 5432
-    targetPort: postgresql
+  - name: memcache
+    port: 11211
+    targetPort: memcache
   selector:
-    app.kubernetes.io/name: postgres
+    app.kubernetes.io/name: memcached

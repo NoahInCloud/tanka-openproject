@@ -5,13 +5,13 @@ metadata:
     app.kubernetes.io/managed-by: tanka
     app.kubernetes.io/part-of: openproject-poc
     environment: production
-  name: lhw-openproject-web
+  name: poc-openproject-web
   namespace: lhw-openproject-prod
 spec:
   replicas: 2
   selector:
     matchLabels:
-      name: lhw-openproject-web
+      name: poc-openproject-web
   template:
     metadata:
       annotations:

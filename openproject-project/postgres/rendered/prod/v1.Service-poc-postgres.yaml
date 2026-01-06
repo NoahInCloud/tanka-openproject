@@ -5,12 +5,12 @@ metadata:
     app.kubernetes.io/managed-by: tanka
     app.kubernetes.io/part-of: openproject-poc
     environment: production
-  name: lhw-openproject-web
+  name: poc-postgres
   namespace: lhw-openproject-prod
 spec:
   ports:
-  - name: http
-    port: 80
-    targetPort: 8080
+  - name: postgresql
+    port: 5432
+    targetPort: postgresql
   selector:
-    app.kubernetes.io/name: openproject
+    app.kubernetes.io/name: postgres

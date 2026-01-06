@@ -5,14 +5,14 @@ metadata:
     app.kubernetes.io/managed-by: tanka
     app.kubernetes.io/part-of: openproject-poc
     environment: production
-  name: lhw-openproject-database
+  name: poc-postgres
   namespace: lhw-openproject-prod
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: lhw-openproject-database
-  serviceName: lhw-openproject-database
+      name: poc-postgres
+  serviceName: poc-postgres
   template:
     metadata:
       annotations:

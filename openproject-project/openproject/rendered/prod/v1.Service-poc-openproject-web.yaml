@@ -5,12 +5,12 @@ metadata:
     app.kubernetes.io/managed-by: tanka
     app.kubernetes.io/part-of: openproject-poc
     environment: production
-  name: lhw-openproject-memcached
+  name: poc-openproject-web
   namespace: lhw-openproject-prod
 spec:
   ports:
-  - name: memcache
-    port: 11211
-    targetPort: memcache
+  - name: http
+    port: 80
+    targetPort: 8080
   selector:
-    app.kubernetes.io/name: memcached
+    app.kubernetes.io/name: openproject
