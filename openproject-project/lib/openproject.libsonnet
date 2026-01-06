@@ -40,7 +40,7 @@ local k = import 'k.libsonnet';
     local port = k.core.v1.servicePort,
     
     deployment: deployment.new(
-      name='poc-memcached',
+      name='tanka-memcached',
       replicas=$.config.replicas,
       containers=[
         container.new('memcached', 'docker.io/bitnami/memcached:latest')
@@ -55,7 +55,7 @@ local k = import 'k.libsonnet';
     + deployment.spec.template.metadata.withLabels($.commonLabels + { 'app.kubernetes.io/name': 'memcached' }),
 
     service: service.new(
-      name='poc-memcached',
+      name='tanka-memcached',
       selector={ 'app.kubernetes.io/name': 'memcached' },
       ports=[port.newNamed('memcache', 11211, 'memcache')],
     )
@@ -72,7 +72,7 @@ local k = import 'k.libsonnet';
     local port = k.core.v1.servicePort,
 
     deployment: deployment.new(
-      name='poc-openproject-web',
+      name='tanka-openproject-web',
       replicas=$.config.replicas,
       containers=[
         container.new('openproject', 'openproject/openproject:14')
@@ -87,7 +87,7 @@ local k = import 'k.libsonnet';
     + deployment.spec.template.metadata.withLabels($.commonLabels + { 'app.kubernetes.io/name': 'openproject' }),
 
     service: service.new(
-      name='poc-openproject-web',
+      name='tanka-openproject-web',
       selector={ 'app.kubernetes.io/name': 'openproject' },
       ports=[port.newNamed('http', 80, 8080)],
     )
@@ -105,7 +105,7 @@ local k = import 'k.libsonnet';
     local pvc = k.core.v1.persistentVolumeClaim,
 
     statefulset: statefulSet.new(
-      name='poc-postgres',
+      name='tanka-postgres',
       replicas=1,
       containers=[
         container.new('postgres', 'docker.io/postgres:16')
@@ -127,10 +127,10 @@ local k = import 'k.libsonnet';
     + statefulSet.metadata.withLabels($.commonLabels)
     + statefulSet.spec.template.metadata.withAnnotations($.vaultAnnotations)
     + statefulSet.spec.template.metadata.withLabels($.commonLabels + { 'app.kubernetes.io/name': 'postgres' })
-    + statefulSet.spec.withServiceName('poc-postgres'),
+    + statefulSet.spec.withServiceName('tanka-postgres'),
 
     service: service.new(
-      name='poc-postgres',
+      name='tanka-postgres',
       selector={ 'app.kubernetes.io/name': 'postgres' },
       ports=[port.newNamed('postgresql', 5432, 'postgresql')],
     )
