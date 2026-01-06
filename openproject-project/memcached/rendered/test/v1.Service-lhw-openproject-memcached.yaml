@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: tanka
+    app.kubernetes.io/part-of: openproject-poc
+    environment: test
+  name: lhw-openproject-memcached
+  namespace: lhw-openproject-test
+spec:
+  ports:
+  - name: memcache
+    port: 11211
+    targetPort: memcache
+  selector:
+    app.kubernetes.io/name: memcached

@@ -1,0 +1,4 @@
+{
+    "apps-v1.Deployment-lhw-openproject-web.yaml": "openproject/environments/test/main.jsonnet",
+    "v1.Service-lhw-openproject-web.yaml": "openproject/environments/test/main.jsonnet"
+}

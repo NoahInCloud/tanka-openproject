@@ -1,0 +1,140 @@
+local k = import 'k.libsonnet';
+
+{
+  // Configuration defaults
+  config:: {
+    namespace: error 'namespace is required',
+    replicas: 1,
+    storage: '1Gi',
+    vaultRole: 'poc-role',
+    vaultSecretPath: 'secret/data/poc/db',
+    environment: 'test',
+  },
+
+  // Vault Agent Injector annotations for POD_INJECTION
+  vaultAnnotations:: {
+    'vault.hashicorp.com/agent-inject': 'true',
+    'vault.hashicorp.com/role': $.config.vaultRole,
+    'vault.hashicorp.com/agent-inject-secret-db': $.config.vaultSecretPath,
+    'vault.hashicorp.com/agent-inject-template-db': |||
+      {{- with secret "%s" -}}
+      export DB_PASSWORD="{{ .Data.data.password }}"
+      export DB_USERNAME="{{ .Data.data.username }}"
+      {{- end }}
+    ||| % $.config.vaultSecretPath,
+  },
+
+  // Common labels
+  commonLabels:: {
+    'app.kubernetes.io/managed-by': 'tanka',
+    'app.kubernetes.io/part-of': 'openproject-poc',
+    environment: $.config.environment,
+  },
+
+  // Memcached component
+  memcached:: {
+    local container = k.core.v1.container,
+    local containerPort = k.core.v1.containerPort,
+    local deployment = k.apps.v1.deployment,
+    local service = k.core.v1.service,
+    local port = k.core.v1.servicePort,
+    
+    deployment: deployment.new(
+      name='lhw-openproject-memcached',
+      replicas=$.config.replicas,
+      containers=[
+        container.new('memcached', 'docker.io/bitnami/memcached:1.6.39-debian-12-r0')
+        + container.withPorts([containerPort.newNamed(11211, 'memcache')])
+        + container.resources.withRequests({ cpu: '100m', memory: '128Mi' })
+        + container.resources.withLimits({ cpu: '500m', memory: '256Mi' }),
+      ],
+    )
+    + deployment.metadata.withNamespace($.config.namespace)
+    + deployment.metadata.withLabels($.commonLabels)
+    + deployment.spec.template.metadata.withAnnotations($.vaultAnnotations)
+    + deployment.spec.template.metadata.withLabels($.commonLabels + { 'app.kubernetes.io/name': 'memcached' }),
+
+    service: service.new(
+      name='lhw-openproject-memcached',
+      selector={ 'app.kubernetes.io/name': 'memcached' },
+      ports=[port.newNamed('memcache', 11211, 'memcache')],
+    )
+    + service.metadata.withNamespace($.config.namespace)
+    + service.metadata.withLabels($.commonLabels),
+  },
+
+  // OpenProject component
+  openproject:: {
+    local container = k.core.v1.container,
+    local containerPort = k.core.v1.containerPort,
+    local deployment = k.apps.v1.deployment,
+    local service = k.core.v1.service,
+    local port = k.core.v1.servicePort,
+
+    deployment: deployment.new(
+      name='lhw-openproject-web',
+      replicas=$.config.replicas,
+      containers=[
+        container.new('openproject', 'openproject/openproject:14')
+        + container.withPorts([containerPort.newNamed(8080, 'http')])
+        + container.resources.withRequests({ cpu: '500m', memory: '1Gi' })
+        + container.resources.withLimits({ cpu: '2', memory: '4Gi' }),
+      ],
+    )
+    + deployment.metadata.withNamespace($.config.namespace)
+    + deployment.metadata.withLabels($.commonLabels)
+    + deployment.spec.template.metadata.withAnnotations($.vaultAnnotations)
+    + deployment.spec.template.metadata.withLabels($.commonLabels + { 'app.kubernetes.io/name': 'openproject' }),
+
+    service: service.new(
+      name='lhw-openproject-web',
+      selector={ 'app.kubernetes.io/name': 'openproject' },
+      ports=[port.newNamed('http', 80, 8080)],
+    )
+    + service.metadata.withNamespace($.config.namespace)
+    + service.metadata.withLabels($.commonLabels),
+  },
+
+  // Postgres component
+  postgres:: {
+    local container = k.core.v1.container,
+    local containerPort = k.core.v1.containerPort,
+    local statefulSet = k.apps.v1.statefulSet,
+    local service = k.core.v1.service,
+    local port = k.core.v1.servicePort,
+    local pvc = k.core.v1.persistentVolumeClaim,
+
+    statefulset: statefulSet.new(
+      name='lhw-openproject-database',
+      replicas=1,
+      containers=[
+        container.new('postgres', 'docker.io/postgres:16')
+        + container.withPorts([containerPort.newNamed(5432, 'postgresql')])
+        + container.withEnvMap({
+          POSTGRES_DB: 'openproject',
+          POSTGRES_USER: 'openproject',
+        })
+        + container.resources.withRequests({ cpu: '250m', memory: '512Mi' })
+        + container.resources.withLimits({ cpu: '1', memory: '2Gi' }),
+      ],
+      volumeClaims=[
+        pvc.new('data')
+        + pvc.spec.withAccessModes(['ReadWriteOnce'])
+        + pvc.spec.resources.withRequests({ storage: $.config.storage }),
+      ],
+    )
+    + statefulSet.metadata.withNamespace($.config.namespace)
+    + statefulSet.metadata.withLabels($.commonLabels)
+    + statefulSet.spec.template.metadata.withAnnotations($.vaultAnnotations)
+    + statefulSet.spec.template.metadata.withLabels($.commonLabels + { 'app.kubernetes.io/name': 'postgres' })
+    + statefulSet.spec.withServiceName('lhw-openproject-database'),
+
+    service: service.new(
+      name='lhw-openproject-database',
+      selector={ 'app.kubernetes.io/name': 'postgres' },
+      ports=[port.newNamed('postgresql', 5432, 'postgresql')],
+    )
+    + service.metadata.withNamespace($.config.namespace)
+    + service.metadata.withLabels($.commonLabels),
+  },
+}

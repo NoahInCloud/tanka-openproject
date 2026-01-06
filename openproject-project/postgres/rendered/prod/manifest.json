@@ -1,0 +1,4 @@
+{
+    "apps-v1.StatefulSet-lhw-openproject-database.yaml": "postgres/environments/prod/main.jsonnet",
+    "v1.Service-lhw-openproject-database.yaml": "postgres/environments/prod/main.jsonnet"
+}

@@ -1,0 +1,6 @@
+{
+  "apiVersion": "tanka.dev/v1alpha1",
+  "kind": "Environment",
+  "metadata": { "name": "openproject/environments/prod" },
+  "spec": { "apiServer": "https://kubernetes.default.svc", "namespace": "lhw-openproject-prod" }
+}
