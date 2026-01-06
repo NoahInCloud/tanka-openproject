@@ -43,7 +43,7 @@ local k = import 'k.libsonnet';
       name='poc-memcached',
       replicas=$.config.replicas,
       containers=[
-        container.new('memcached', 'docker.io/bitnami/memcached:1.6.39-debian-12-r0')
+        container.new('memcached', 'docker.io/bitnami/memcached:latest')
         + container.withPorts([containerPort.newNamed(11211, 'memcache')])
         + container.resources.withRequests({ cpu: '100m', memory: '128Mi' })
         + container.resources.withLimits({ cpu: '500m', memory: '256Mi' }),
