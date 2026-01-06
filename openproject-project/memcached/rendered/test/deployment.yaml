@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: tanka
+    app.kubernetes.io/part-of: openproject-poc
+    environment: test
+  name: tanka-memcached
+  namespace: lhw-openproject-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: memcached
+  template:
+    metadata:
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-inject-secret-db: secret/data/poc/db
+        vault.hashicorp.com/agent-inject-template-db: |
+          {{- with secret "secret/data/poc/db" -}}
+          export DB_PASSWORD="{{ .Data.data.password }}"
+          export DB_USERNAME="{{ .Data.data.username }}"
+          {{- end }}
+        vault.hashicorp.com/role: poc-role
+      labels:
+        app.kubernetes.io/managed-by: tanka
+        app.kubernetes.io/name: memcached
+        app.kubernetes.io/part-of: openproject-poc
+        environment: test
+    spec:
+      automountServiceAccountToken: true
+      serviceAccountName: tanka-memcached
+      containers:
+        - image: docker.io/bitnami/memcached:latest
+          name: memcached
+          ports:
+            - containerPort: 11211
+              name: memcache
+          resources:
+            limits:
+              cpu: 500m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tanka-memcached
+  namespace: lhw-openproject-test
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: tanka
+    app.kubernetes.io/part-of: openproject-poc
+    environment: test
+  name: tanka-memcached
+  namespace: lhw-openproject-test
+spec:
+  ports:
+    - name: memcache
+      port: 11211
+      targetPort: memcache
+  selector:
+    app.kubernetes.io/name: memcached

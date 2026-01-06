@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: tanka
+    app.kubernetes.io/part-of: openproject-poc
+    environment: test
+  name: tanka-openproject-web
+  namespace: lhw-openproject-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: openproject
+  template:
+    metadata:
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-inject-secret-db: secret/data/poc/db
+        vault.hashicorp.com/agent-inject-template-db: |
+          {{- with secret "secret/data/poc/db" -}}
+          export DB_PASSWORD="{{ .Data.data.password }}"
+          export DB_USERNAME="{{ .Data.data.username }}"
+          {{- end }}
+        vault.hashicorp.com/role: poc-role
+      labels:
+        app.kubernetes.io/managed-by: tanka
+        app.kubernetes.io/name: openproject
+        app.kubernetes.io/part-of: openproject-poc
+        environment: test
+    spec:
+      automountServiceAccountToken: true
+      serviceAccountName: tanka-openproject-web
+      containers:
+        - image: openproject/openproject:14
+          name: openproject
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            limits:
+              cpu: "2"
+              memory: 4Gi
+            requests:
+              cpu: 500m
+              memory: 1Gi
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tanka-openproject-web
+  namespace: lhw-openproject-test
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: tanka
+    app.kubernetes.io/part-of: openproject-poc
+    environment: test
+  name: tanka-openproject-web
+  namespace: lhw-openproject-test
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+  selector:
+    app.kubernetes.io/name: openproject
