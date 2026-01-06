@@ -1,4 +1,0 @@
-{
-    "apps-v1.Deployment-lhw-openproject-web.yaml": "openproject/environments/prod/main.jsonnet",
-    "v1.Service-lhw-openproject-web.yaml": "openproject/environments/prod/main.jsonnet"
-}

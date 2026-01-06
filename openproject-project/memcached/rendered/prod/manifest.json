@@ -1,4 +1,0 @@
-{
-    "apps-v1.Deployment-lhw-openproject-memcached.yaml": "memcached/environments/prod/main.jsonnet",
-    "v1.Service-lhw-openproject-memcached.yaml": "memcached/environments/prod/main.jsonnet"
-}
