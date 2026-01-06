@@ -92,8 +92,8 @@ tanka-openproject/
     │   │   ├── test/main.jsonnet
     │   │   └── prod/main.jsonnet
     │   └── rendered/
-    │       ├── test/deployment.yaml
-    │       └── prod/deployment.yaml
+    │       ├── test/manifests.yaml
+    │       └── prod/manifests.yaml
     ├── openproject/
     │   ├── environments/...
     │   └── rendered/...

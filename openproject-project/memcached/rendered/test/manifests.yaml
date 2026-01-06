@@ -5,17 +5,18 @@ metadata:
     app.kubernetes.io/managed-by: tanka
     app.kubernetes.io/part-of: openproject-poc
     environment: test
-  name: tanka-openproject-web
+  name: tanka-memcached
   namespace: lhw-openproject-test
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: openproject
+      app.kubernetes.io/name: memcached
   template:
     metadata:
       annotations:
         vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/service: "http://vault.vault.svc:8200"
         vault.hashicorp.com/agent-inject-secret-db: secret/data/poc/db
         vault.hashicorp.com/agent-inject-template-db: |
           {{- with secret "secret/data/poc/db" -}}
@@ -25,30 +26,30 @@ spec:
         vault.hashicorp.com/role: poc-role
       labels:
         app.kubernetes.io/managed-by: tanka
-        app.kubernetes.io/name: openproject
+        app.kubernetes.io/name: memcached
         app.kubernetes.io/part-of: openproject-poc
         environment: test
     spec:
       automountServiceAccountToken: true
-      serviceAccountName: tanka-openproject-web
+      serviceAccountName: tanka-memcached
       containers:
-        - image: openproject/openproject:14
-          name: openproject
+        - image: docker.io/bitnami/memcached:latest
+          name: memcached
           ports:
-            - containerPort: 8080
-              name: http
+            - containerPort: 11211
+              name: memcache
           resources:
             limits:
-              cpu: "2"
-              memory: 4Gi
-            requests:
               cpu: 500m
-              memory: 1Gi
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: tanka-openproject-web
+  name: tanka-memcached
   namespace: lhw-openproject-test
 ---
 apiVersion: v1
@@ -58,12 +59,12 @@ metadata:
     app.kubernetes.io/managed-by: tanka
     app.kubernetes.io/part-of: openproject-poc
     environment: test
-  name: tanka-openproject-web
+  name: tanka-memcached
   namespace: lhw-openproject-test
 spec:
   ports:
-    - name: http
-      port: 80
-      targetPort: 8080
+    - name: memcache
+      port: 11211
+      targetPort: memcache
   selector:
-    app.kubernetes.io/name: openproject
+    app.kubernetes.io/name: memcached

@@ -1,22 +1,22 @@
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   labels:
     app.kubernetes.io/managed-by: tanka
     app.kubernetes.io/part-of: openproject-poc
     environment: test
-  name: tanka-postgres
+  name: tanka-openproject-web
   namespace: lhw-openproject-test
 spec:
   replicas: 1
-  serviceName: tanka-postgres
   selector:
     matchLabels:
-      app.kubernetes.io/name: postgres
+      app.kubernetes.io/name: openproject
   template:
     metadata:
       annotations:
         vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/service: "http://vault.vault.svc:8200"
         vault.hashicorp.com/agent-inject-secret-db: secret/data/poc/db
         vault.hashicorp.com/agent-inject-template-db: |
           {{- with secret "secret/data/poc/db" -}}
@@ -26,47 +26,30 @@ spec:
         vault.hashicorp.com/role: poc-role
       labels:
         app.kubernetes.io/managed-by: tanka
-        app.kubernetes.io/name: postgres
+        app.kubernetes.io/name: openproject
         app.kubernetes.io/part-of: openproject-poc
         environment: test
     spec:
       automountServiceAccountToken: true
-      serviceAccountName: tanka-postgres
+      serviceAccountName: tanka-openproject-web
       containers:
-        - image: docker.io/postgres:16
-          name: postgres
-          env:
-            - name: POSTGRES_DB
-              value: openproject
-            - name: POSTGRES_USER
-              value: openproject
+        - image: openproject/openproject:14
+          name: openproject
           ports:
-            - containerPort: 5432
-              name: postgresql
+            - containerPort: 8080
+              name: http
           resources:
             limits:
-              cpu: "1"
-              memory: 2Gi
+              cpu: "2"
+              memory: 4Gi
             requests:
-              cpu: 250m
-              memory: 512Mi
-          volumeMounts:
-            - name: data
-              mountPath: /var/lib/postgresql/data
-  volumeClaimTemplates:
-    - metadata:
-        name: data
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        resources:
-          requests:
-            storage: 1Gi
+              cpu: 500m
+              memory: 1Gi
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: tanka-postgres
+  name: tanka-openproject-web
   namespace: lhw-openproject-test
 ---
 apiVersion: v1
@@ -76,12 +59,12 @@ metadata:
     app.kubernetes.io/managed-by: tanka
     app.kubernetes.io/part-of: openproject-poc
     environment: test
-  name: tanka-postgres
+  name: tanka-openproject-web
   namespace: lhw-openproject-test
 spec:
   ports:
-    - name: postgresql
-      port: 5432
-      targetPort: postgresql
+    - name: http
+      port: 80
+      targetPort: 8080
   selector:
-    app.kubernetes.io/name: postgres
+    app.kubernetes.io/name: openproject

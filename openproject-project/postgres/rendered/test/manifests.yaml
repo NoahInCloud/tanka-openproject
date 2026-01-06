@@ -1,21 +1,23 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   labels:
     app.kubernetes.io/managed-by: tanka
     app.kubernetes.io/part-of: openproject-poc
     environment: test
-  name: tanka-memcached
+  name: tanka-postgres
   namespace: lhw-openproject-test
 spec:
   replicas: 1
+  serviceName: tanka-postgres
   selector:
     matchLabels:
-      app.kubernetes.io/name: memcached
+      app.kubernetes.io/name: postgres
   template:
     metadata:
       annotations:
         vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/service: "http://vault.vault.svc:8200"
         vault.hashicorp.com/agent-inject-secret-db: secret/data/poc/db
         vault.hashicorp.com/agent-inject-template-db: |
           {{- with secret "secret/data/poc/db" -}}
@@ -25,30 +27,47 @@ spec:
         vault.hashicorp.com/role: poc-role
       labels:
         app.kubernetes.io/managed-by: tanka
-        app.kubernetes.io/name: memcached
+        app.kubernetes.io/name: postgres
         app.kubernetes.io/part-of: openproject-poc
         environment: test
     spec:
       automountServiceAccountToken: true
-      serviceAccountName: tanka-memcached
+      serviceAccountName: tanka-postgres
       containers:
-        - image: docker.io/bitnami/memcached:latest
-          name: memcached
+        - image: docker.io/postgres:16
+          name: postgres
+          env:
+            - name: POSTGRES_DB
+              value: openproject
+            - name: POSTGRES_USER
+              value: openproject
           ports:
-            - containerPort: 11211
-              name: memcache
+            - containerPort: 5432
+              name: postgresql
           resources:
             limits:
-              cpu: 500m
-              memory: 256Mi
+              cpu: "1"
+              memory: 2Gi
             requests:
-              cpu: 100m
-              memory: 128Mi
+              cpu: 250m
+              memory: 512Mi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: tanka-memcached
+  name: tanka-postgres
   namespace: lhw-openproject-test
 ---
 apiVersion: v1
@@ -58,12 +77,12 @@ metadata:
     app.kubernetes.io/managed-by: tanka
     app.kubernetes.io/part-of: openproject-poc
     environment: test
-  name: tanka-memcached
+  name: tanka-postgres
   namespace: lhw-openproject-test
 spec:
   ports:
-    - name: memcache
-      port: 11211
-      targetPort: memcache
+    - name: postgresql
+      port: 5432
+      targetPort: postgresql
   selector:
-    app.kubernetes.io/name: memcached
+    app.kubernetes.io/name: postgres
